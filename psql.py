@@ -1,12 +1,14 @@
 import psycopg2
 
 
-class MyPSQL:
-    conn = None
-    user = ''
-    password = ''
-    dbname = ''
-    is_authorized = False
+class PSQL:
+
+    def __init__(self):
+        self.conn = None
+        self.user = ''
+        self.password = ''
+        self.dbname = ''
+        self.is_authorized = False
 
     def __del__(self):
         if self.conn is not None:
@@ -53,4 +55,6 @@ class MyPSQL:
                         ''.join([str(element) for row in output for element in row]))
             except psycopg2.DataError:
                 self.conn.rollback()
-                return ''
+                return 'Wrong command'
+
+    def create_default_table(self):
