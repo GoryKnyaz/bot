@@ -58,3 +58,4 @@ class PSQL:
                 return 'Wrong command'
 
     def create_default_table(self):
+        pass
