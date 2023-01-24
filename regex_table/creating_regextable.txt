@@ -1,0 +1,13 @@
+CREATE TABLE IF NOT EXISTS public."regextable"
+(
+    id integer NOT NULL DEFAULT 1,
+    marker text,
+    regular_expression text,
+    version text,
+    CONSTRAINT "regextable_pkey" PRIMARY KEY (id)
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS public."regextable"
+    OWNER to postgres;

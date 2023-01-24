@@ -1,5 +1,4 @@
-from telebot import *
-from abtest import ABTest
+from abtest import ABTest, telebot
 
 ab_test = ABTest()
 
@@ -14,12 +13,7 @@ def start(message):
 
 @ab_test.my_bot.message_handler(content_types=['text'])
 def main(message):
-    if not ab_test.my_PSQL.is_authorized:
-        ab_test.authorization(message)
-    elif message.text == '📝Файл' and not ab_test.is_selects_file and not ab_test.is_dataset_selected:
-        ab_test.select_dataset()
-    elif ab_test.is_dataset_selected:
-        pass
+    ab_test.main(message.text)
 
 
 ab_test.my_bot.polling(none_stop=True, interval=0)
