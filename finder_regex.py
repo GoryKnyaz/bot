@@ -1,15 +1,37 @@
 import re
+
 from typing import List
 
 
 class Finder:
-    def __init__(self, reg_ex_string='', marker=''):
+    """
+    This is a class that specializes in storing a regular expression and using it to match a pattern in text.
+    """
+
+    def __init__(self, reg_ex_string=r'', marker=''):
+        """
+        Constructor
+        :param str reg_ex_string: the regular expression itself.
+        :param str marker: regex type indicating what the regex is for.
+        """
         self.reg_ex = reg_ex_string
         self.marker = marker
 
     def findIn(self, text: str):
-        re.findall(self.reg_ex, text)
+        """
+        A function to find all matches for a given regular expression.
+        :param str text: string to apply regular expression.
+        :return: List[str]: array of matches.
+        """
+        return re.findall(self.reg_ex, text)
 
     def findInMass(self, massText: List[str]):
+        """
+         A function to find all matches for a given regular expression.
+        :param List[str] massText: array of strings to apply to each regular expression.
+        :return: List[str]: array of matches for each string of the array of strings.
+        """
+        result = []
         for text in massText:
-            re.findall(self.reg_ex, text)
+            result.append(re.findall(self.reg_ex, text))
+        return result
