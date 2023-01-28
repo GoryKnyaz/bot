@@ -1,5 +1,4 @@
 import telebot
-from easygui import fileopenbox
 
 from config import TOKEN
 from db_reader import Reader, write_to_excel
@@ -19,11 +18,9 @@ class ABTest:
         """
         Constructor.
         """
-        self.my_chat_id = 0
         self.my_PSQL = PSQL()
         self.my_finder = Finder()
         self.my_dataset = Reader()
-        self.is_selects_file = False
         self.is_dataset_selected = False
         self.my_bot = telebot.TeleBot(TOKEN)
 
@@ -31,16 +28,15 @@ class ABTest:
         """
         A function to reset all data.
         """
-        self.my_chat_id = 0
         self.my_PSQL = PSQL()
         self.my_finder = Finder()
         self.my_dataset = Reader()
-        self.is_selects_file = False
         self.is_dataset_selected = False
 
-    def authorization(self, text):
+    def authorization(self, text, chat_id):
         """
         A function for user authorization in PostgreSQL via telegram.
+        :param int chat_id: chat param id
         :param str text: string of user message.
         """
         user_data = []
@@ -53,52 +49,58 @@ class ABTest:
                 for marker in markers:
                     button = telebot.types.KeyboardButton(marker)
                     markup.add(button)
-                self.my_bot.send_message(self.my_chat_id,
+                self.my_bot.send_message(chat_id,
                                          '✅Доступ разрешен.\nВыберете маркер регулярных выражений',
                                          reply_markup=markup)
             else:
-                self.my_bot.send_message(self.my_chat_id, '❌В доступе отказано')
+                self.my_bot.send_message(chat_id, '❌В доступе отказано')
         else:
-            self.my_bot.send_message(self.my_chat_id, '❌Неправильно введен логин и пароль')
+            self.my_bot.send_message(chat_id, '❌Неправильно введен логин и пароль')
 
-    def set_marker(self, text):
+    def set_marker(self, text, chat_id):
         """
         A function for set marker of regular expression via telegram.
+        :param chat_id: chat param id
         :param text: string of user message.
         """
         if text in markers:
             self.my_finder.marker = text
-            self.my_bot.send_message(self.my_chat_id, '✅Маркер выбран успешно.',
+            self.my_bot.send_message(chat_id, '✅Маркер выбран успешно.',
                                      reply_markup=telebot.types.ReplyKeyboardRemove())
-            markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
-            button = telebot.types.KeyboardButton("📝Файл")
-            markup.add(button)
-            self.my_bot.send_message(self.my_chat_id, 'Нажмите на кнопку и выберете датасет', reply_markup=markup)
+            self.my_bot.send_message(chat_id, 'Отправте мне файл с датасетом '
+                                              '(я принимаю только \'txt\', \'xlsx\', \'zip\' с \'txt\')')
         else:
-            self.my_bot.send_message(self.my_chat_id, '❌Такого маркера нет. Попробуете еще раз.')
+            self.my_bot.send_message(chat_id, '❌Такого маркера нет. Попробуете еще раз.')
 
-    def select_dataset(self):
+    def select_dataset(self, message):
         """
         A function for setting a dataset in a file via telegram.
+        :param message:
         """
-        self.is_selects_file = True
-        path_to_dataset = fileopenbox(filetypes=['*.txt', '*.zip', '*.xlsx'])
-        if path_to_dataset != '':
+        file_name = message.document.file_name
+        if file_name.endswith('txt') or file_name.endswith('xlsx') or file_name.endswith('zip'):
             try:
-                self.my_bot.send_message(self.my_chat_id,
-                                         'Открылось окно, если оно не появилось, то сверните все вкладки')
-                self.my_dataset.read(path_to_dataset)
-                self.my_bot.send_message(self.my_chat_id, '✅Файл прочитан успешно.',
+                file_info = self.my_bot.get_file(message.document.file_id)
+                downloaded_file = self.my_bot.download_file(file_info.file_path)
+                with open(f'user_files/{file_name}', 'wb') as new_file:
+                    new_file.write(downloaded_file)
+                self.my_dataset.read(f'user_files/{file_name}')
+                self.my_bot.send_message(message.chat.id, '✅Файл прочитан успешно.',
                                          reply_markup=telebot.types.ReplyKeyboardRemove())
                 self.is_dataset_selected = True
             except telebot.ExceptionHandler:
-                self.my_bot.send_message(self.my_chat_id, '❌Невозможно распознать датасет. Выберете другой.')
-        self.is_selects_file = False
+                self.my_bot.send_message(message.chat.id, '❌Невозможно распознать датасет. Выберете другой.')
+                return False
+        else:
+            self.my_bot.send_message(message.chat.id,
+                                     '❌Этот формат я не понимаю, загрузите txt, xlsx или zip с txt внутри.')
+            return False
+        return True
 
-    def ab_test(self):
+    def ab_test(self, chat_id):
         """
         A function executed ab-test via telegram.
-        :return:
+        :param int chat_id: chat param id
         """
         result = []
         for regex_mass in self.my_PSQL.parsing_by('marker', self.my_finder.marker)[1:]:
@@ -112,20 +114,32 @@ class ABTest:
         write_to_excel('Результаты.xls',
                        ['Маркер', 'Рег_выражение', 'Версия', 'Время поиска(милисек.))', 'Кол-во совпадений'], result)
         with open('Результаты.xls', 'rb') as xlsx_file:
-            self.my_bot.send_document(self.my_chat_id, xlsx_file)
-        self.my_bot.send_message(self.my_chat_id, 'Для выполения АБ-теста напиши \'/start\'')
+            self.my_bot.send_document(chat_id, xlsx_file)
+        self.my_bot.send_message(chat_id, 'Можно присылать и дальше присылать датасеты, чтобы выполнить АБ-тест, но '
+                                          'если нужно начать заново, то напиши \'/start\'')
 
-    def main(self, text):
+    def download(self, message):
+        """
+        :param class message: the object of class Message from telegram library,
+        this contains useful information like chat id, text string, document and others
+        """
+        if self.my_finder.marker:
+            if self.select_dataset(message):
+                self.ab_test(message.chat.id)
+        else:
+            self.my_bot.send_message(message.chat.id, 'Ну и зачем ты мне это прислал?')
+
+    def text(self, text, chat_id):
         """
         A function that provides all the necessary logic to execute ab-test.
-        :param text: string of user message.
+        :param int chat_id: chat param id
+        :param str text: string of user message.
         """
         if not self.my_PSQL.is_authorized:
-            self.authorization(text)
+            self.authorization(text, chat_id)
         elif not self.my_PSQL.conn:
             self.my_PSQL.create_default_table()
         elif not self.my_finder.marker:
-            self.set_marker(text)
-        elif text == '📝Файл' and not self.is_selects_file and not self.is_dataset_selected:
-            self.select_dataset()
-            self.ab_test()
+            self.set_marker(text, chat_id)
+        else:
+            self.my_bot.send_message(chat_id, 'Я все еще жду свой файл с датасетом')

@@ -65,7 +65,7 @@ class Reader:
             for col in worksheet.iter_cols(1, worksheet.max_column):
                 for row in range(0, worksheet.max_row):
                     if col[row].value is not None:
-                        self.data.append(col[row].value)
+                        self.data.append(str(col[row].value))
         elif path_to_file.endswith('zip'):
             with ZipFile(path_to_file) as archive:
                 for archive_filename in archive.namelist():
