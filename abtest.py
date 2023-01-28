@@ -40,9 +40,9 @@ class ABTest:
         :param str text: string of user message.
         """
         user_data = []
-        for text_spliting in text.split(' '):
-            if text_spliting:
-                user_data.append(text_spliting)
+        for text_split in text.split(' '):
+            if text_split:
+                user_data.append(text_split)
         if len(user_data) == 2:
             if self.my_PSQL.authorization(user_data[0], user_data[1]):
                 markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -75,7 +75,8 @@ class ABTest:
     def select_dataset(self, message):
         """
         A function for setting a dataset in a file via telegram.
-        :param message:
+        :param class message:
+        :return bool: True if the file was successfully downloaded and read, otherwise False
         """
         file_name = message.document.file_name
         if file_name.endswith('txt') or file_name.endswith('xlsx') or file_name.endswith('zip'):
