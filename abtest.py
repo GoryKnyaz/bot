@@ -89,8 +89,11 @@ class ABTest:
                 self.my_bot.send_message(message.chat.id, '✅Файл прочитан успешно.',
                                          reply_markup=telebot.types.ReplyKeyboardRemove())
                 self.is_dataset_selected = True
-            except telebot.ExceptionHandler:
+            except telebot.apihelper.ApiTelegramException:
                 self.my_bot.send_message(message.chat.id, '❌Невозможно распознать датасет. Выберете другой.')
+                return False
+            except telebot.apihelper.ConnectionError:
+                self.my_bot.send_message(message.chat.id, 'Отошел, буду скоро).')
                 return False
         else:
             self.my_bot.send_message(message.chat.id,
@@ -123,24 +126,36 @@ class ABTest:
         """
         :param class message: the object of class Message from telegram library,
         this contains useful information like chat id, text string, document and others
+        :return bool: True if the connection is active, False otherwise
         """
-        if self.my_finder.marker:
-            if self.select_dataset(message):
-                self.ab_test(message.chat.id)
-        else:
-            self.my_bot.send_message(message.chat.id, 'Ну и зачем ты мне это прислал?')
+        try:
+            if self.my_finder.marker:
+                if self.select_dataset(message):
+                    self.ab_test(message.chat.id)
+            else:
+                self.my_bot.send_message(message.chat.id, 'Ну и зачем ты мне это прислал?')
+        except telebot.apihelper.ConnectionError:
+            self.my_bot.send_message(message.chat.id, 'Отошел, буду скоро).')
+            return False
+        return True
 
     def text(self, text, chat_id):
         """
         A function that provides all the necessary logic to execute ab-test.
         :param int chat_id: chat param id
         :param str text: string of user message.
+        :return bool: True if the connection is active, False otherwise
         """
-        if not self.my_PSQL.is_authorized:
-            self.authorization(text, chat_id)
-        elif not self.my_PSQL.conn:
-            self.my_PSQL.create_default_table()
-        elif not self.my_finder.marker:
-            self.set_marker(text, chat_id)
-        else:
-            self.my_bot.send_message(chat_id, 'Я все еще жду свой файл с датасетом')
+        try:
+            if not self.my_PSQL.is_authorized:
+                self.authorization(text, chat_id)
+            elif not self.my_PSQL.conn:
+                self.my_PSQL.create_default_table()
+            elif not self.my_finder.marker:
+                self.set_marker(text, chat_id)
+            else:
+                self.my_bot.send_message(chat_id, 'Я все еще жду свой файл с датасетом')
+        except telebot.apihelper.ConnectionError:
+            self.my_bot.send_message(chat_id, 'Отошел, буду скоро).')
+            return False
+        return True

@@ -25,7 +25,6 @@ def text(message):
     """
     ab_test.text(message.text, message.chat.id)
 
-
 @ab_test.my_bot.message_handler(content_types=['document'])
 def download_document(message):
     """
