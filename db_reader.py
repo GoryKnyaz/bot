@@ -7,9 +7,12 @@ from xlwt import Workbook
 def write_to_excel(filename, headlines, mass):
     """
     A function to write data to excel table.
-    :param str filename: the name of the file by which the Excel file will be stored.
-    :param List(str) headlines: the array of names of columns.
-    :param List(List(Any)) mass: two-dimensional array of data.
+    :param filename: the name of the file by which the Excel file will be stored.
+    :type filename: str
+    :param headlines: the array of names of columns.
+    :type headlines: List(str)
+    :param mass: two-dimensional array of data.
+    :type mass: List(List(Any))
     """
     book = Workbook(encoding='utf8')
     sh = book.add_sheet('Table0')
@@ -42,7 +45,8 @@ class Reader:
     def __init__(self, path_to_file=''):
         """
         Constructor.
-        :param str path_to_file: path to the file for reading and storing information in itself.
+        :param path_to_file: path to the file for reading and storing information in itself.
+        :type path_to_file: str
         """
         self.data = None
         self.path_to_file = None
@@ -52,7 +56,8 @@ class Reader:
     def read(self, path_to_file):
         """
         A function to read information from a file and write it to an array called 'data'.
-        :param str path_to_file: path to the file for reading and storing information in itself.
+        :param path_to_file: path to the file for reading and storing information in itself.
+        :type path_to_file: str
         """
         self.path_to_file = path_to_file
         self.data = []

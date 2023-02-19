@@ -11,8 +11,10 @@ class Finder:
     def __init__(self, reg_ex_string=r'', marker=''):
         """
         Constructor
-        :param str reg_ex_string: the regular expression itself.
-        :param str marker: regex type indicating what the regex is for.
+        :param reg_ex_string: the regular expression itself.
+        :type reg_ex_string: str
+        :param marker: regex type indicating what the regex is for.
+        :type marker: str
         """
         self.reg_ex = reg_ex_string
         self.marker = marker
@@ -20,16 +22,22 @@ class Finder:
     def findIn(self, text: str):
         """
         A function to find all matches for a given regular expression.
-        :param str text: string to apply regular expression.
-        :return: List[str]: array of matches.
+        :param text: string to apply regular expression.
+        :type text: str
+
+        :rtype: List[str]
+        :return: array of matches.
         """
         return re.findall(self.reg_ex, text)
 
     def findInMass(self, massText: List[str]):
         """
          A function to find all matches for a given regular expression.
-        :param List[str] massText: array of strings to apply to each regular expression.
-        :return: List[str]: array of matches for each string of the array of strings.
+        :param massText: array of strings to apply to each regular expression.
+        :type massText: List(str)
+
+        :rtype: List[str]
+        :return: array of matches for each string of the array of strings.
         """
         result = []
         for text in massText:

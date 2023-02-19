@@ -5,7 +5,10 @@ def reading_my_table_from(filename_of_commands):
     """
     A function to process from file its content.
     :param filename_of_commands: the path where the file with data is stored.
-    :return List(List(str)): the array of data from file.
+    :type filename_of_commands: str
+
+    :rtype:List(List(str))
+    :return: the array of data from file.
     """
     table = []
     with open(filename_of_commands, encoding="utf8") as txt_file:
@@ -60,8 +63,10 @@ class PSQL:
     def create_my_table_from(self, filename_of_commands, table_mass):
         """
         A function that creates a  table from a file with SQL code and array of data.
-        :param str filename_of_commands: the path where the file with SQL code is stored.
-        :param List(str) table_mass: the array of data required to fill the table.
+        :param filename_of_commands: the path where the file with SQL code is stored.
+        :type filename_of_commands: str
+        :param table_mass: the array of data required to fill the table.
+        :type table_mass: List(str)
         """
         with open(filename_of_commands, encoding="utf8") as txt_file:
             self.execute_command(''.join([line for line in txt_file.readlines()]))
@@ -71,21 +76,43 @@ class PSQL:
                                              ('),' if row is not table_mass[-1] else ')')) for col in row])
         self.execute_command(f'{command};')
 
-    def authorization(self, user, password):
+    def create_my_database(self, name_of_database):
+        """
+        A function that creates a  table from a file with SQL code and array of data.
+        :param name_of_database: the path where the file with SQL code is stored.
+        :type name_of_database: str
+        """
+        self.execute_command(f"CREATE DATABASE \"{name_of_database}\" "
+                             "WITH "
+                             "OWNER = postgres "
+                             "ENCODING = 'UTF8' "
+                             "LC_COLLATE = 'Russian_Russia.1251' "
+                             "LC_CTYPE = 'Russian_Russia.1251' "
+                             "TABLESPACE = pg_default "
+                             "CONNECTION LIMIT = -1 "
+                             "IS_TEMPLATE = False;")
+
+    def authorization(self, user, password, dbname="postgres"):
         """
         A function enter in PostgreSQL system by login and password.
-        :param str user: name of user in PostgreSQL.
-        :param str password: password of user in PostgreSQL.
-        :return bool: True if authorization was successful, otherwise False.
+        :param user: name of user in PostgreSQL.
+        :type user: str
+        :param password: password of user in PostgreSQL.
+        :type password: str
+        :param dbname:
+        :type dbname: str
+
+        :rtype: bool
+        :return: True if authorization was successful, otherwise False.
         """
         try:
             self.conn = psycopg2.connect(
                 f"user='{user}' password='{password}' "
-                f"host='127.0.0.1' port='5432' dbname='postgres'")
+                f"host='127.0.0.1' port='5432' dbname='{dbname}'")
             self.conn.autocommit = True
             self.user = user
             self.password = password
-            self.dbname = "postgres"
+            self.dbname = dbname
             self.is_authorized = True
         except psycopg2.DatabaseError:
             return False
@@ -94,8 +121,11 @@ class PSQL:
     def execute_command(self, command):
         """
         A function that executes an SQL command and prints the output, if any.
-        :param str command: SQL string command.
-        :return List(List(str)): the output array from SQL command.
+        :param command: SQL string command.
+        :type command: str
+
+        :rtype: List(List(str))
+        :return: the output array from SQL command.
         """
         with self.conn.cursor() as cur:
             try:
@@ -110,8 +140,12 @@ class PSQL:
         """
         A function that performs parsing on a specific field in a table.
         :param str element_string: the string with name for parsing.
+        :type element_string: str
         :param str element_value: the string to find.
-        :return List(List(str)): the output array by parsing.
+        :type element_value: str
+
+        :rtype: List(List(str))
+        :return: the output array by parsing.
         """
         with self.conn.cursor() as cur:
             try:
@@ -122,10 +156,15 @@ class PSQL:
                 return []
             return [[str(desc[0]) for desc in cur.description], [str(element) for row in output for element in row]]
 
-    def create_default_table(self):
+    def create_default_database(self):
         """
         A function that creates a default table from a SQL code file and a file with content.
         """
+        self.authorization("postgres", "1111")
+        db = self.execute_command("select datname from pg_database WHERE datname = 'TGServer'")
+        if not len(db[1]):
+            self.create_my_database("TGServer")
+        self.authorization("postgres", "1111", "TGServer")
         def_table = reading_my_table_from('regex_table/regextable.txt')
         table = self.execute_command('select * from public."regextable";')
         if not table:
